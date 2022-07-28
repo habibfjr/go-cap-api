@@ -1,17 +1,16 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"capi/app"
+	"capi/logger"
 )
 
+// capi = nama module di go.mod // app = nama folder -> package
+// this is called refactor in golang, quite similar to context mgt in reactjs
+// task: get data customer
+
 func main() {
-
-	// * defining routes
-	http.HandleFunc("/greet", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Hello Celerates!")
-	})
-
-	// * starting the server
-	http.ListenAndServe(":8080", nil)
+	// log.Println("Starting application...")
+	logger.Info("Starting application...")
+	app.Start()
 }
