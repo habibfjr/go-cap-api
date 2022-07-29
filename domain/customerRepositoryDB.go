@@ -25,31 +25,35 @@ func NewCustomerRepositoryDB() CustomerRepositoryDB {
 	return CustomerRepositoryDB{db}
 }
 
-func (d CustomerRepositoryDB) FindAll() ([]Customer, error) {
-	query := "select * from customers"
+func (d CustomerRepositoryDB) FindAll(customerStatus string) ([]Customer, *errs.AppErr) {
 
-	rows, err := d.client.Query(query)
-	if err != nil {
-		log.Println("error querying customers", err.Error())
-		return nil, err
-	}
 	var customers []Customer
-	for rows.Next() {
-		var c Customer
-		rows.Scan(&c.ID, &c.Name, &c.DateOfBirth, &c.City, &c.ZipCode, &c.Status)
+
+	if customerStatus == "" {
+		query := "select * from customers"
+		err := d.client.Select(&customers, query)
 		if err != nil {
-			log.Println("error scanning customer", err.Error())
+			logger.Error("error querying customer" + err.Error())
+			return nil, errs.NewUnexpectedError("unexpected database error")
 		}
-		customers = append(customers, c)
+	} else {
+		if customerStatus == "active" {
+			customerStatus = "1"
+		} else {
+			customerStatus = "0"
+		}
+		query := "select * from customers where status = $1"
+		err := d.client.Select(&customers, query, customerStatus)
+		if err != nil {
+			logger.Error("error querying customer" + err.Error())
+			return nil, errs.NewUnexpectedError("unexpected database error")
+		}
 	}
 	return customers, nil
 }
 
 func (d CustomerRepositoryDB) FindByID(customerID string) (*Customer, *errs.AppErr) {
 	query := "select * from customers where customer_id = $1"
-
-	// row := d.client.QueryRow(query, customerID)
-	// err := row.Scan(&c.ID, &c.Name, &c.DateOfBirth, &c.City, &c.ZipCode, &c.Status)
 
 	var c Customer
 

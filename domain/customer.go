@@ -15,7 +15,7 @@ type Customer struct {
 }
 
 type CustomerRepository interface {
-	FindAll() ([]Customer, error)
+	FindAll(string) ([]Customer, *errs.AppErr)
 	FindByID(string) (*Customer, *errs.AppErr)
 	// start with adding another function here
 }
@@ -36,23 +36,5 @@ func (c Customer) ToDTO() dto.CustomerResponse {
 		City:        c.City,
 		ZipCode:     c.ZipCode,
 		Status:      c.convertStatusName(),
-		// Status:     c.Status,
-		// Status:      statusName,
 	}
 }
-
-// type CustomerRepositoryStub struct {
-// 	Customer []Customer
-// }
-
-// func (s CustomerRepositoryStub) FindAll() ([]Customer, error) {
-// 	return s.Customer, nil
-// }
-
-// func NewCustomerRepositoryStub() CustomerRepositoryStub {
-// 	customers := []Customer{
-// 		{"1", "User1", "Jakarta", "12345", "2022-01-01", "1"},
-// 		{"2", "User2", "Surabaya", "67890", "2022-01-01", "1"},
-// 	}
-// 	return CustomerRepositoryStub{Customer: customers}
-// }

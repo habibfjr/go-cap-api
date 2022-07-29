@@ -7,7 +7,7 @@ import (
 )
 
 type CustomerService interface {
-	GetAllCustomer() ([]domain.Customer, error)
+	GetAllCustomer(string) ([]dto.CustomerResponse, *errs.AppErr)
 	GetCustomerByID(string) (*dto.CustomerResponse, *errs.AppErr)
 }
 
@@ -15,8 +15,18 @@ type DefaultCustomerService struct {
 	repository domain.CustomerRepository
 }
 
-func (s DefaultCustomerService) GetAllCustomer() ([]domain.Customer, error) {
-	return s.repository.FindAll()
+func (s DefaultCustomerService) GetAllCustomer(customerStatus string) ([]dto.CustomerResponse, *errs.AppErr) {
+	customers, err := s.repository.FindAll(customerStatus)
+	if err != nil {
+		return nil, errs.NewUnexpectedError("unexpected database error")
+	}
+
+	// *put values after converted to DTO
+	var dtoCust []dto.CustomerResponse
+	for _, customer := range customers {
+		dtoCust = append(dtoCust, customer.ToDTO())
+	}
+	return dtoCust, nil
 }
 
 func (s DefaultCustomerService) GetCustomerByID(customerID string) (*dto.CustomerResponse, *errs.AppErr) {
@@ -28,14 +38,6 @@ func (s DefaultCustomerService) GetCustomerByID(customerID string) (*dto.Custome
 	response := cust.ToDTO()
 
 	return &response, nil
-	// response := dto.CustomerResponse{
-	// 	ID:          cust.ID,
-	// 	Name:        cust.Name,
-	// 	DateOfBirth: cust.DateOfBirth,
-	// 	City:        cust.City,
-	// 	ZipCode:     cust.ZipCode,
-	// 	Status:      cust.Status,
-	// }
 }
 
 func NewCustomerService(repository domain.CustomerRepository) DefaultCustomerService {

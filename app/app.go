@@ -11,7 +11,6 @@ import (
 func Start() {
 
 	// *wiring
-	// ch := CustomerHandler{service.NewCustomerService(domain.NewCustomerRepositoryStub())}
 	ch := CustomerHandler{service.NewCustomerService(domain.NewCustomerRepositoryDB())}
 
 	// * create ServeMux
