@@ -12,30 +12,40 @@ type CustomerService interface {
 }
 
 type DefaultCustomerService struct {
-	repository domain.CustomerRepository
+	repo domain.CustomerRepository
 }
 
-func (s DefaultCustomerService) GetAllCustomer(customerStatus string) ([]dto.CustomerResponse, *errs.AppErr) {
-	customers, err := s.repository.FindAll(customerStatus)
-	if err != nil {
-		return nil, errs.NewUnexpectedError("unexpected database error")
+func (s DefaultCustomerService) GetAllCustomer(status string) ([]dto.CustomerResponse, *errs.AppErr) {
+	if status == "active" {
+		status = "1"
+	} else if status == "inactive" {
+		status = "0"
+	} else if status == "" {
+		status = ""
+	} else {
+		return nil, errs.NewBadRequestError("invalid request")
 	}
 
-	// *put values after converted to DTO
-	var dtoCust []dto.CustomerResponse
-	for _, customer := range customers {
-		dtoCust = append(dtoCust, customer.ToDTO())
-	}
-	return dtoCust, nil
-}
-
-func (s DefaultCustomerService) GetCustomerByID(customerID string) (*dto.CustomerResponse, *errs.AppErr) {
-	cust, err := s.repository.FindByID(customerID)
+	customers, err := s.repo.FindAll(status)
 	if err != nil {
 		return nil, err
 	}
 
-	response := cust.ToDTO()
+	var response []dto.CustomerResponse
+	for _, customer := range customers {
+		response = append(response, customer.ToDTO())
+	}
+
+	return response, nil
+}
+
+func (s DefaultCustomerService) GetCustomerByID(customerID string) (*dto.CustomerResponse, *errs.AppErr) {
+	c, err := s.repo.FindByID(customerID)
+	if err != nil {
+		return nil, err
+	}
+
+	response := c.ToDTO()
 
 	return &response, nil
 }
