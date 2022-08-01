@@ -11,62 +11,57 @@ import (
 )
 
 type CustomerRepositoryDB struct {
-	client *sqlx.DB
+	db *sqlx.DB
 }
 
-func NewCustomerRepositoryDB() CustomerRepositoryDB {
-	// *connection string
-	// connStr := "user=pqgotest dbname=pqgotest sslmode=verify-full"
-	connStr := "postgres://postgres:Yhf171999@localhost/banking?sslmode=disable"
-	db, err := sqlx.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return CustomerRepositoryDB{db}
+func NewCustomerRepositoryDB(client *sqlx.DB) CustomerRepositoryDB {
+
+	return CustomerRepositoryDB{client}
 }
 
-func (d CustomerRepositoryDB) FindAll(customerStatus string) ([]Customer, *errs.AppErr) {
+func (s CustomerRepositoryDB) FindAll(status string) ([]Customer, *errs.AppErr) {
+
+	var query string
+	var err error
 
 	var customers []Customer
 
-	if customerStatus == "" {
-		query := "select * from customers"
-		err := d.client.Select(&customers, query)
-		if err != nil {
-			logger.Error("error querying customer" + err.Error())
-			return nil, errs.NewUnexpectedError("unexpected database error")
-		}
+	if status == "" {
+		query = "select * from customers"
+		err = s.db.Select(&customers, query)
 	} else {
-		if customerStatus == "active" {
-			customerStatus = "1"
-		} else {
-			customerStatus = "0"
-		}
-		query := "select * from customers where status = $1"
-		err := d.client.Select(&customers, query, customerStatus)
-		if err != nil {
-			logger.Error("error querying customer" + err.Error())
-			return nil, errs.NewUnexpectedError("unexpected database error")
-		}
+		query = "select * from customers where status = $1"
+		err = s.db.Select(&customers, query, status)
 	}
+
+	if err != nil {
+		logger.Error("error fetch data to customer table " + err.Error())
+		return nil, errs.NewUnexpectedError("unexpected database error")
+	}
+
 	return customers, nil
+
 }
 
-func (d CustomerRepositoryDB) FindByID(customerID string) (*Customer, *errs.AppErr) {
+func (s CustomerRepositoryDB) FindByID(id string) (*Customer, *errs.AppErr) {
+
 	query := "select * from customers where customer_id = $1"
 
 	var c Customer
 
-	err := d.client.Get(&c, query, customerID)
+	err := s.db.Get(&c, query, id)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			logger.Error("customer data not found" + err.Error())
-			return nil, errs.NewNotFoundError("customer data not found")
+			logger.Error(err.Error())
+			return nil, errs.NewNotFoundError("customer not found")
 		} else {
-			logger.Error("error scanning customer data " + err.Error())
+			log.Println("error scanning customer data ", err.Error())
 			return nil, errs.NewUnexpectedError("unexpected database error")
 		}
+
 	}
 
 	return &c, nil
+
 }
